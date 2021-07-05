@@ -2,9 +2,9 @@ from tkinter import *
 from tkinter import ttk
 from tkinter import filedialog as fd
 from tkinter import messagebox
-from tkinter.messagebox import showinfo
 from pathlib import Path
 import pandas as pd
+from pandas.core.frame import DataFrame
 
 class Application:
     def __init__(self, root: Tk):
@@ -108,22 +108,6 @@ class Application:
         # Dataframe
         self.dataframe = None
 
-    def add_categories(self):
-        if len(self.available_categories_list.curselection()) == 0:
-            return
-        available_items = self.available_categories_list.get(0, END)
-        selected_items = self.selected_categories_list.get(0, END)
-        for each_item in self.available_categories_list.curselection():
-            if available_items[each_item] not in selected_items:
-                self.selected_categories_list.insert(END, available_items[each_item])
-    
-    def remove_categories(self):
-        if len(self.selected_categories_list.curselection()) == 0:
-            return
-        tuple_to_remove = self.selected_categories_list.curselection()
-        for id in reversed(tuple_to_remove):
-            self.selected_categories_list.delete(id)
-
     def add_columns(self):
         """
         Transfer selected items from 'Select columns' to 'Selected columns' and ommit
@@ -146,10 +130,26 @@ class Application:
         tuple_to_remove = self.selected_list.curselection()
         for id in reversed(tuple_to_remove):
             self.selected_list.delete(id)
+    
+    def add_categories(self):
+        if len(self.available_categories_list.curselection()) == 0:
+            return
+        available_items = self.available_categories_list.get(0, END)
+        selected_items = self.selected_categories_list.get(0, END)
+        for each_item in self.available_categories_list.curselection():
+            if available_items[each_item] not in selected_items:
+                self.selected_categories_list.insert(END, available_items[each_item])
+    
+    def remove_categories(self):
+        if len(self.selected_categories_list.curselection()) == 0:
+            return
+        tuple_to_remove = self.selected_categories_list.curselection()
+        for id in reversed(tuple_to_remove):
+            self.selected_categories_list.delete(id)
 
     def open_json_file(self):
         """
-        Open json file and pass it to pandas
+        Open json file, pass it to pandas and populate columns
         """
         file_path = self.select_file()
         try:
@@ -159,6 +159,11 @@ class Application:
         df = pd.json_normalize(df['data'])
         categories = df['category.name'].drop_duplicates()
         categories = sorted(categories.to_list())
+        # Find better way to change datetime from epoch time
+        df['created_at'] = pd.to_datetime(df['created_at'], unit='s')
+        df['launched_at'] = pd.to_datetime(df['launched_at'], unit='s')
+        df['state_changed_at'] = pd.to_datetime(df['state_changed_at'], unit='s')
+        df['deadline'] = pd.to_datetime(df['deadline'], unit='s')
         self.populate_columns_with_data(self.available_list ,list(df.columns))
         self.populate_columns_with_data(self.available_categories_list, categories)
         self.dataframe = df
@@ -194,10 +199,15 @@ class Application:
         if len(self.selected_list.get(0, END)) == 0:
             messagebox.showerror(title="No columns to export", message="You have to add columns which you want to export")
             return
+        if len(self.selected_categories_list.get(0, END)) == 0:
+            messagebox.showerror(title="No categories", message="You have to add categories which you want to export")
+            return
         filename = self.save_file()
         df = self.dataframe
+        df = self.select_rows_by_categories(df)
         df = df[list(self.selected_list.get(0, END))]
-        df.to_csv(filename, index=True)
+        df.to_csv(filename, index=False)
+        messagebox.showinfo(title="Success", message="Data exported")
 
     def save_file(self):
         """
@@ -214,7 +224,15 @@ class Application:
         )
 
         return filename
-
+    
+    def get_categories_to_export(self):
+        return list(self.selected_categories_list.get(0, END))
+    
+    def select_rows_by_categories(self, dataframe: DataFrame):
+        """
+        Return dataframe with only chosen categories
+        """
+        return dataframe[dataframe['category.name'].isin(self.get_categories_to_export())]
 
 if __name__ == "__main__":
     root = Tk()
