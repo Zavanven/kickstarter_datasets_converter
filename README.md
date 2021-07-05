@@ -1,6 +1,6 @@
 # Kickstarter datasets converter
 JSON to CSV converter for datasets from https://webrobots.io/kickstarter-datasets/ which allows you to choose columns and categories to export.
-Made width **pandas** and **tkinter**.
+Made with **pandas** and **tkinter**.
 
 ![alt text](https://i.imgur.com/jcXxQLK.png)
 
