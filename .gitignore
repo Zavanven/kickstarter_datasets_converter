@@ -146,3 +146,5 @@ cython_debug/
 data/
 kolumny.txt
 test.csv
+test.py
+test2.py
