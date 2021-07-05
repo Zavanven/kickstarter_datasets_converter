@@ -11,6 +11,14 @@ class Application:
         self.frame_main = Frame(root)
         self.frame_main.grid(sticky='news')
 
+        # Menu
+        self.menubar = Menu(root)
+        self.file_menu = Menu(self.menubar, tearoff=0)
+        self.file_menu.add_command(label="Open", command=self.open_json_file)
+        self.menubar.add_cascade(label="File", menu=self.file_menu)
+
+        self.root.config(menu=self.menubar)
+
         # Labels
         self.select_col_label = Label(self.frame_main, text="Select columns:")
         self.selected_col_label = Label(self.frame_main, text="Selected columns:")
@@ -78,6 +86,9 @@ class Application:
         for each_item in range(len(x)):    
             self.available_list.insert(END, x[each_item])
             self.available_list.itemconfig(each_item)
+
+    def open_json_file(self):
+        pass
 
 
 if __name__ == "__main__":
